@@ -31,5 +31,5 @@ jobs:
             az deployment group create \
             -- name StorageAccountTestzc \
             -- resource-group cloud-shell-storage-southeastasia \
-            -- template-file armtemplates/storageaccount.json \
+            -- template-file armtemplates/storageaccount1.json \
             -- parameters storageAccountType=Standard_GRS
