@@ -1,146 +1,146 @@
-#####
-name: GoldWin Sync code to AWS CodeCommit
+# #####
+# name: GoldWin Sync code to AWS CodeCommit
 
-on:
-  push:
-    branches:
-      - develop
-      - staging
-      - main
-    paths:
-      - 'school/**'
+# on:
+#   push:
+#     branches:
+#       - develop
+#       - staging
+#       - main
+#     paths:
+#       - 'school/**'
 
-jobs:
-  sync-code-school:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
+# jobs:
+#   sync-code-school:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       id-token: write
+#       contents: read
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+#         with:
+#           fetch-depth: 0
 
-      - name: Set Environment Variables
-        run: |
-          if [[ "${{ github.ref_name }}" == "develop" ]]; then
-              echo "env=dev" >> $GITHUB_ENV
-              echo "BRANCH=develop" >> $GITHUB_ENV
-              echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_DEV }}" >> $GITHUB_ENV
-              echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_DEV }}" >> $GITHUB_ENV
-              echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_DEV }}" >> $GITHUB_ENV
-              echo "Environment=Develop" >> $GITHUB_ENV
-          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
-              echo "env=stg" >> $GITHUB_ENV
-              echo "BRANCH=staging" >> $GITHUB_ENV
-              echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_STG }}" >> $GITHUB_ENV
-              echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_STG }}" >> $GITHUB_ENV
-              echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_STG }}" >> $GITHUB_ENV
-              echo "Environment=Staging" >> $GITHUB_ENV
-          elif [[ "${{ github.ref_name }}" == "main" ]]; then
-              echo "env=prd" >> $GITHUB_ENV
-              echo "BRANCH=main" >> $GITHUB_ENV
-              echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_PRD }}" >> $GITHUB_ENV
-              echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_PRD }}" >> $GITHUB_ENV
-              echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_PRD }}" >> $GITHUB_ENV
-              echo "Environment=Production" >> $GITHUB_ENV
-          else
-              echo "Unsupported branch. Exiting..."
-              exit 1
-          fi
+#       - name: Set Environment Variables
+#         run: |
+#           if [[ "${{ github.ref_name }}" == "develop" ]]; then
+#               echo "env=dev" >> $GITHUB_ENV
+#               echo "BRANCH=develop" >> $GITHUB_ENV
+#               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_DEV }}" >> $GITHUB_ENV
+#               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_DEV }}" >> $GITHUB_ENV
+#               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_DEV }}" >> $GITHUB_ENV
+#               echo "Environment=Develop" >> $GITHUB_ENV
+#           elif [[ "${{ github.ref_name }}" == "staging" ]]; then
+#               echo "env=stg" >> $GITHUB_ENV
+#               echo "BRANCH=staging" >> $GITHUB_ENV
+#               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_STG }}" >> $GITHUB_ENV
+#               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_STG }}" >> $GITHUB_ENV
+#               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_STG }}" >> $GITHUB_ENV
+#               echo "Environment=Staging" >> $GITHUB_ENV
+#           elif [[ "${{ github.ref_name }}" == "main" ]]; then
+#               echo "env=prd" >> $GITHUB_ENV
+#               echo "BRANCH=main" >> $GITHUB_ENV
+#               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_PRD }}" >> $GITHUB_ENV
+#               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_PRD }}" >> $GITHUB_ENV
+#               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_PRD }}" >> $GITHUB_ENV
+#               echo "Environment=Production" >> $GITHUB_ENV
+#           else
+#               echo "Unsupported branch. Exiting..."
+#               exit 1
+#           fi
 
-      - name: Notify Slack (Start)
-        uses: slackapi/slack-github-action@v1.22.0
-        with:
-          channel-id: ${{ env.CHANNEL_ID }}
-          payload: |
-            {
-              "text": "<!channel>\nSync code started (In Progress) for School :beach-ball:",
-              "attachments": [
-                {
-                  "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action: Starting\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-                  "color": "dbab09",
-                  "fields": [
-                    {
-                      "title": "Status",
-                      "short": true,
-                      "value": "In Progress"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
+#       - name: Notify Slack (Start)
+#         uses: slackapi/slack-github-action@v1.22.0
+#         with:
+#           channel-id: ${{ env.CHANNEL_ID }}
+#           payload: |
+#             {
+#               "text": "<!channel>\nSync code started (In Progress) for School :beach-ball:",
+#               "attachments": [
+#                 {
+#                   "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action: Starting\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+#                   "color": "dbab09",
+#                   "fields": [
+#                     {
+#                       "title": "Status",
+#                       "short": true,
+#                       "value": "In Progress"
+#                     }
+#                   ]
+#                 }
+#               ]
+#             }
+#         env:
+#           SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.ASSUME_ROLE }}
-          aws-region: ap-northeast-1
-          role-session-name: GitHubActionsSession
-          audience: sts.amazonaws.com
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           role-to-assume: ${{ env.ASSUME_ROLE }}
+#           aws-region: ap-northeast-1
+#           role-session-name: GitHubActionsSession
+#           audience: sts.amazonaws.com
 
-      - name: Sync code to CodeCommit
-        env:
-          AWS_REGION: ap-northeast-1
-        run: |
-          echo "Syncing changes for School"
-          CodeCommitUrl="https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${{env.env}}-goldwin-codecommit-school-repo"
-          git config --global --add safe.directory /github/workspace
-          git config --global credential.'https://git-codecommit.*.amazonaws.com'.helper '!aws codecommit credential-helper $@'
-          git config --global credential.UseHttpPath true
-          git remote add sync ${CodeCommitUrl}
-          git push sync staging --force
+#       - name: Sync code to CodeCommit
+#         env:
+#           AWS_REGION: ap-northeast-1
+#         run: |
+#           echo "Syncing changes for School"
+#           CodeCommitUrl="https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${{env.env}}-goldwin-codecommit-school-repo"
+#           git config --global --add safe.directory /github/workspace
+#           git config --global credential.'https://git-codecommit.*.amazonaws.com'.helper '!aws codecommit credential-helper $@'
+#           git config --global credential.UseHttpPath true
+#           git remote add sync ${CodeCommitUrl}
+#           git push sync staging --force
 
-      - name: Notify Slack (Completed)
-        if: success()
-        uses: slackapi/slack-github-action@v1.22.0
-        with:
-          channel-id: ${{ env.CHANNEL_ID }}
-          payload: |
-            {
-              "text": "<!channel>\nSync code finished (Completed) for School :deploy:",
-              "attachments": [
-                {
-                  "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-                  "color": "28a745",
-                  "fields": [
-                    {
-                      "title": "Status",
-                      "short": true,
-                      "value": "Completed"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
+#       - name: Notify Slack (Completed)
+#         if: success()
+#         uses: slackapi/slack-github-action@v1.22.0
+#         with:
+#           channel-id: ${{ env.CHANNEL_ID }}
+#           payload: |
+#             {
+#               "text": "<!channel>\nSync code finished (Completed) for School :deploy:",
+#               "attachments": [
+#                 {
+#                   "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+#                   "color": "28a745",
+#                   "fields": [
+#                     {
+#                       "title": "Status",
+#                       "short": true,
+#                       "value": "Completed"
+#                     }
+#                   ]
+#                 }
+#               ]
+#             }
+#         env:
+#           SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
 
-      - name: Notify Slack (Failed)
-        if: failure()
-        uses: slackapi/slack-github-action@v1.22.0
-        with:
-          channel-id: ${{ env.CHANNEL_ID }}
-          payload: |
-            {
-              "text": "<!channel>\nSync code Failure for School :error:",
-              "attachments": [
-                {
-                  "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-                  "color": "ff0000",
-                  "fields": [
-                    {
-                      "title": "Status",
-                      "short": true,
-                      "value": "Failed"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
+#       - name: Notify Slack (Failed)
+#         if: failure()
+#         uses: slackapi/slack-github-action@v1.22.0
+#         with:
+#           channel-id: ${{ env.CHANNEL_ID }}
+#           payload: |
+#             {
+#               "text": "<!channel>\nSync code Failure for School :error:",
+#               "attachments": [
+#                 {
+#                   "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+#                   "color": "ff0000",
+#                   "fields": [
+#                     {
+#                       "title": "Status",
+#                       "short": true,
+#                       "value": "Failed"
+#                     }
+#                   ]
+#                 }
+#               ]
+#             }
+#         env:
+#           SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
