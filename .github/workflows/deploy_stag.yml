@@ -1,0 +1,114 @@
+name: Deploy to AWS CodeCommit
+
+on:
+  push:
+    branches:
+      - staging
+    paths:
+      - 'parent/**'
+
+jobs:
+  deploy:
+    runs-on: arc-runners-sun
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - id: slack
+        uses: slackapi/slack-github-action@v1.22.0
+        with:
+          channel-id: "C081KFCEAUD"
+          payload: |
+            {
+              "text": "<!channel>\nSync code started (In Progress) :beach-ball:",
+              "attachments": [
+                {
+                  "pretext": "ENV: Staging\nRepository: ${{ github.repository }}\nGitHub Action: Starting\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+                  "color": "dbab09",
+                  "fields": [
+                    {
+                      "title": "Status",
+                      "short": true,
+                      "value": "In Progress"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN}}
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::992382506000:role/stag_github_action_sync_code_commit_role
+          aws-region: us-east-1
+          role-session-name: GitHubActionsSession
+          audience: sts.amazonaws.com
+
+      - name: Sync code to CodeCommit
+        env:
+          REPOSITORY_NAME: stag-goldwin-codecommit-parent-repo
+          AWS_REGION: ap-northeast-1
+        run: |
+          CodeCommitUrl="https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${REPOSITORY_NAME}"
+
+          git config --global --add safe.directory /github/workspace
+          git config --global credential.'https://git-codecommit.*.amazonaws.com'.helper '!aws codecommit credential-helper $@'
+          git config --global credential.UseHttpPath true
+          git remote add sync ${CodeCommitUrl}
+          git push sync staging --force
+
+      - name: Report Status
+        if: failure()
+        uses: slackapi/slack-github-action@v1.22.0
+        with:
+          channel-id: "C081KFCEAUD"
+          payload: |
+            {
+              "text": "<!channel>\nSync code Failure :error:",
+              "attachments": [
+                {
+                  "pretext": "ENV: Staging\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+                  "color": "ff0000",
+                  "fields": [
+                    {
+                      "title": "Status",
+                      "short": true,
+                      "value": "Failed"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN}}
+
+      # - name: Report Status
+      #   if: success()
+      #   uses: slackapi/slack-github-action@v1.22.0
+      #   with:
+      #     channel-id: "C0806F0JP17"
+      #     payload: |
+      #       {
+      #         "text": "<!channel>\nSync code finished (Completed) :deploy:",
+      #         "attachments": [
+      #           {
+      #             "pretext": "ENV: Staging\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+      #             "color": "28a745",
+      #             "fields": [
+      #               {
+      #                 "title": "Status",
+      #                 "short": true,
+      #                 "value": "Completed"
+      #               }
+      #             ]
+      #           }
+      #         ]
+      #       }
+      #   env:
+      #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN}}

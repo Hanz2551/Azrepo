@@ -1,0 +1,26 @@
+.toast {
+  &__message--top-center {
+    top: 8px !important;
+  }
+
+  &__message {
+    padding: 16px 24px;
+    box-shadow:
+      0px 10px 15px -3px #0000001a,
+      0px 4px 6px -4px #1018281a;
+    border-radius: 6px;
+    max-width: calc(100% - 32px);
+  }
+
+  &__error-wrapper {
+    @apply bg-energetic-red-50;
+  }
+
+  &__success-wrapper {
+    @apply bg-leaf-green-50;
+  }
+
+  &__content {
+    gap: 8px;
+  }
+}

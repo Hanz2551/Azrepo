@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Lato:wght@400;500;700&display=swap');
+
+@tailwind base;
+
+@layer base {
+  html {
+    @apply font-noto-sans-jp;
+    @apply text-color-text;
+  }
+
+  *,
+  ::before,
+  ::after {
+    @apply border-color-border;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 600;
+  }
+}
+
+@tailwind components;
+@tailwind utilities;
+
+.scroller-y-base {
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    border-radius: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    @apply bg-regent-gray-100;
+    border-radius: 8px;
+  }
+}
+
+.scroller-base {
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    border-radius: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    @apply bg-regent-gray-100;
+    border-radius: 8px;
+  }
+}

@@ -1,0 +1,39 @@
+.toast {
+  &__message--top-center {
+    top: 8px !important;
+  }
+
+  &__message--bottom-right {
+    right: 32px !important;
+    bottom: 32px !important;
+  }
+
+  &__message {
+    @apply text-body14;
+    font-weight: 500;
+    padding: 16px;
+    box-shadow:
+      0px 10px 15px -3px #0000001a,
+      0px 4px 6px -4px #1018281a;
+    border-radius: 6px;
+    max-width: calc(100% - 32px);
+  }
+
+  &__error-wrapper {
+    @apply bg-energetic-red-50;
+    @apply text-color-text;
+    min-width: 360px;
+  }
+
+  &__success-wrapper {
+    @apply bg-leaf-green-50;
+    @apply text-color-text;
+    min-width: 360px;
+  }
+
+  &__content {
+    gap: 8px;
+    justify-content: space-between;
+    min-height: 24px;
+  }
+}
