@@ -11,7 +11,7 @@ on:
       - 'parent/**'
 
 jobs:
-  deploy:
+  sync-code-parent:
     runs-on: ubuntu-latest
     permissions:
       id-token: write

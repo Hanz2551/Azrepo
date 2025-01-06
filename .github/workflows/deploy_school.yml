@@ -11,7 +11,7 @@ on:
       - 'school/**'
 
 jobs:
-  deploy:
+  sync-code-school:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
