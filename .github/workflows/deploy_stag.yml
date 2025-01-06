@@ -204,6 +204,12 @@ jobs:
             echo "directory_changed=false" >> $GITHUB_ENV
           fi
 
+      - name: Skip if folder not changed
+        if: env.directory_changed == 'false'
+        run: |
+          echo "No changes detected for ${{ matrix.dir }}. Skipping job."
+          exit 0
+          
       - name: Notify Slack (Start)
         if: env.directory_changed == 'true'
         uses: slackapi/slack-github-action@v1.22.0
