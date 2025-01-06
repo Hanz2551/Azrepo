@@ -351,8 +351,10 @@ jobs:
 
           echo "Changed directories: $(cat changed_dirs.json)"
           echo "::set-output name=changed_dirs::$(cat changed_dirs.json)"
+
       - name: Debug Output
-        run: echo "Changed directories: ${{ steps.set-matrix.outputs.changed_dirs }}"
+        run: |
+          echo "Changed directories: ${{ steps.set-matrix.outputs.changed_dirs }}"
 
   deploy:
     needs: detect-changes
