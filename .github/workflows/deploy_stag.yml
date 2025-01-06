@@ -6,10 +6,18 @@ on:
       - staging
     paths:
       - 'parent/**'
+      - 'kid/**'
+      - 'school/**'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [parent, kid, school]
+    env:
+      TARGET_FOLDER: ${{ matrix.target }}
+      REPOSITORY_NAME: stag-goldwin-codecommit-${{ matrix.target }}-repo
     permissions:
       id-token: write
       contents: read
@@ -52,7 +60,7 @@ jobs:
 
       - name: Sync code to CodeCommit
         env:
-          REPOSITORY_NAME: stag-goldwin-codecommit-parent-repo
+          # REPOSITORY_NAME: stag-goldwin-codecommit-parent-repo
           AWS_REGION: ap-northeast-1
         run: |
           CodeCommitUrl="https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${REPOSITORY_NAME}"
@@ -88,27 +96,27 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN}}
 
-      # - name: Report Status
-      #   if: success()
-      #   uses: slackapi/slack-github-action@v1.22.0
-      #   with:
-      #     channel-id: "C0806F0JP17"
-      #     payload: |
-      #       {
-      #         "text": "<!channel>\nSync code finished (Completed) :deploy:",
-      #         "attachments": [
-      #           {
-      #             "pretext": "ENV: Staging\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-      #             "color": "28a745",
-      #             "fields": [
-      #               {
-      #                 "title": "Status",
-      #                 "short": true,
-      #                 "value": "Completed"
-      #               }
-      #             ]
-      #           }
-      #         ]
-      #       }
-      #   env:
-      #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN}}
+      - name: Report Status
+        if: success()
+        uses: slackapi/slack-github-action@v1.22.0
+        with:
+          channel-id: "C081KFCEAUD"
+          payload: |
+            {
+              "text": "<!channel>\nSync code finished (Completed) :deploy:",
+              "attachments": [
+                {
+                  "pretext": "ENV: Staging\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+                  "color": "28a745",
+                  "fields": [
+                    {
+                      "title": "Status",
+                      "short": true,
+                      "value": "Completed"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN}}
