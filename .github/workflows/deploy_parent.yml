@@ -52,7 +52,6 @@ jobs:
           fi
 
       - name: Notify Slack (Start)
-        if: env.directory_changed == 'true'
         uses: slackapi/slack-github-action@v1.22.0
         with:
           channel-id: ${{ env.CHANNEL_ID }}
@@ -85,7 +84,6 @@ jobs:
           audience: sts.amazonaws.com
 
       - name: Sync code to CodeCommit
-        if: env.directory_changed == 'true'
         env:
           AWS_REGION: ap-northeast-1
         run: |
@@ -123,7 +121,7 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
 
       - name: Notify Slack (Failed)
-        if: failure() && env.directory_changed == 'true'
+        if: failure()
         uses: slackapi/slack-github-action@v1.22.0
         with:
           channel-id: ${{ env.CHANNEL_ID }}
