@@ -345,9 +345,15 @@ jobs:
             fi
           done
           
-          # Output the changed directories as a JSON array
-          echo "Changed directories: ${changed_dirs[@]}"
-          echo "::set-output name=changed_dirs::$(echo ${changed_dirs[@]} | jq -c '. | split(" ")')"
+          # If no directories changed, set to an empty array
+          if [ ${#changed_dirs[@]} -eq 0 ]; then
+            echo "No directories changed. Skipping deploy."
+            echo "::set-output name=changed_dirs::[]"
+          else
+            # Output the changed directories as a JSON array
+            echo "Changed directories: ${changed_dirs[@]}"
+            echo "::set-output name=changed_dirs::$(echo ${changed_dirs[@]} | jq -c '. | split(" ")')"
+          fi
 
   deploy:
     needs: detect-changes
