@@ -9,7 +9,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: arc-runners-sun
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
