@@ -15,6 +15,10 @@ jobs:
     strategy:
       matrix:
         target: [parent, kid, school]
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Check if folder changed
         id: folder-check
@@ -24,16 +28,6 @@ jobs:
           else
             echo "folder_changed=false" >> $GITHUB_ENV
 
-      - name: Skip job if folder did not change
-        if: env.folder_changed == 'true'
-        run: echo "Deploying for ${{ matrix.dir }}"
-    env:
-      TARGET_FOLDER: ${{ matrix.target }}
-      REPOSITORY_NAME: stag-goldwin-codecommit-${{ matrix.target }}-repo
-    permissions:
-      id-token: write
-      contents: read
-    steps:
       - id: slack
         uses: slackapi/slack-github-action@v1.22.0
         with:
@@ -71,11 +65,13 @@ jobs:
           audience: sts.amazonaws.com
 
       - name: Sync code to CodeCommit
+        if: env.directory_changed == 'true'
         env:
           # REPOSITORY_NAME: stag-goldwin-codecommit-parent-repo
           AWS_REGION: ap-northeast-1
         run: |
-          CodeCommitUrl="https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${REPOSITORY_NAME}"
+          echo "Syncing changes for ${{ matrix.dir }}"
+          CodeCommitUrl="https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/stag-goldwin-codecommit-${{ matrix.dir }}-repo"
 
           git config --global --add safe.directory /github/workspace
           git config --global credential.'https://git-codecommit.*.amazonaws.com'.helper '!aws codecommit credential-helper $@'
