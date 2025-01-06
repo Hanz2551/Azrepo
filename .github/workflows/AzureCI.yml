@@ -9,27 +9,27 @@
 
 #   # Allows you to run this workflow manually from the Actions tab
 #   workflow_dispatch:
-on: [push]
-name: AzureARMDeploy
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:
-  # This workflow contains a single job called "build"
-    deploy:
-      runs-on: ubuntu-latest
-      steps:
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Checkout source code
-        uses: actions/checkout@v2
+# on: [push]
+# name: AzureARMDeploy
+# # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# jobs:
+#   # This workflow contains a single job called "build"
+#     deploy:
+#       runs-on: ubuntu-latest
+#       steps:
+#       - name: Login to Azure
+#         uses: azure/login@v1
+#         with:
+#           creds: ${{ secrets.AZURE_CREDENTIALS }}
+#       - name: Checkout source code
+#         uses: actions/checkout@v2
       
-      - name: Deploy ARM Template
-        uses: azure/CLI@v1
-        with:
-          inlineScript: |
-            az deployment group create \
-            -- name StorageAccountTestzc \
-            -- resource-group cloud-shell-storage-southeastasia \
-            -- template-file armtemplates/storageaccount1.json \
-            -- parameters storageAccountType=Standard_GRS
+#       - name: Deploy ARM Template
+#         uses: azure/CLI@v1
+#         with:
+#           inlineScript: |
+#             az deployment group create \
+#             -- name StorageAccountTestzc \
+#             -- resource-group cloud-shell-storage-southeastasia \
+#             -- template-file armtemplates/storageaccount1.json \
+#             -- parameters storageAccountType=Standard_GRS
