@@ -335,25 +335,22 @@ jobs:
       - name: Detect changed directories
         id: set-matrix
         run: |
-          # Initialize an empty array for changed directories
           changed_dirs=()
-          
-          # Check each directory for changes
           for dir in parent kid school; do
             if git diff --name-only HEAD~1 HEAD | grep -q "^$dir/"; then
               changed_dirs+=("$dir")
             fi
           done
           
-          # If no directories changed, set to an empty array
+          # Ensure changed_dirs is a valid JSON array
           if [ ${#changed_dirs[@]} -eq 0 ]; then
-            echo "No directories changed. Skipping deploy."
-            echo "::set-output name=changed_dirs::[]"
+            echo "[]" > changed_dirs.json
           else
-            # Output the changed directories as a JSON array
-            echo "Changed directories: ${changed_dirs[@]}"
-            echo "::set-output name=changed_dirs::$(echo ${changed_dirs[@]} | jq -c '. | split(" ")')"
+            printf '%s\n' "${changed_dirs[@]}" | jq -R . | jq -s . > changed_dirs.json
           fi
+
+          echo "Changed directories: $(cat changed_dirs.json)"
+          echo "::set-output name=changed_dirs::$(cat changed_dirs.json)"
 
   deploy:
     needs: detect-changes
