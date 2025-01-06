@@ -137,178 +137,8 @@
 
 
 
-# #####
-# name: GoldWin Sync code to AWS CodeCommit
-
-# on:
-#   push:
-#     branches:
-#       - develop
-#       - staging
-#       - main
-#     paths:
-#       - 'parent/**'
-#       - 'kid/**'
-#       - 'school/**'
-
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
-#     strategy:
-#       matrix:
-#         dir: [parent, kid, school]
-#     permissions:
-#       id-token: write
-#       contents: read
-
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-#         with:
-#           fetch-depth: 0
-
-#       - name: Set Environment Variables
-#         run: |
-#           if [[ "${{ github.ref_name }}" == "develop" ]]; then
-#               echo "env=dev" >> $GITHUB_ENV
-#               echo "BRANCH=develop" >> $GITHUB_ENV
-#               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_DEV }}" >> $GITHUB_ENV
-#               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_DEV }}" >> $GITHUB_ENV
-#               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_DEV }}" >> $GITHUB_ENV
-#               echo "Environment=Develop" >> $GITHUB_ENV
-#           elif [[ "${{ github.ref_name }}" == "staging" ]]; then
-#               echo "env=stg" >> $GITHUB_ENV
-#               echo "BRANCH=staging" >> $GITHUB_ENV
-#               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_STG }}" >> $GITHUB_ENV
-#               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_STG }}" >> $GITHUB_ENV
-#               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_STG }}" >> $GITHUB_ENV
-#               echo "Environment=Staging" >> $GITHUB_ENV
-#           elif [[ "${{ github.ref_name }}" == "main" ]]; then
-#               echo "env=prd" >> $GITHUB_ENV
-#               echo "BRANCH=main" >> $GITHUB_ENV
-#               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_PRD }}" >> $GITHUB_ENV
-#               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_PRD }}" >> $GITHUB_ENV
-#               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_PRD }}" >> $GITHUB_ENV
-#               echo "Environment=Production" >> $GITHUB_ENV
-#           else
-#               echo "Unsupported branch. Exiting..."
-#               exit 1
-#           fi
-
-#       - name: Check if folder changed
-#         id: folder-check
-#         run: |
-#           if git diff --name-only HEAD~1 HEAD | grep -q "^${{ matrix.dir }}/"; then
-#             echo "directory_changed=true" >> $GITHUB_ENV
-#           else
-#             echo "directory_changed=false" >> $GITHUB_ENV
-#           fi
-
-#       - name: Skip if folder not changed
-#         if: env.directory_changed == 'false'
-#         run: |
-#           echo "No changes detected for ${{ matrix.dir }}. Skipping job."
-#           exit 0
-
-#       - name: Notify Slack (Start)
-#         if: env.directory_changed == 'true'
-#         uses: slackapi/slack-github-action@v1.22.0
-#         with:
-#           channel-id: ${{ env.CHANNEL_ID }}
-#           payload: |
-#             {
-#               "text": "<!channel>\nSync code started (In Progress) for ${{ matrix.dir }} :beach-ball:",
-#               "attachments": [
-#                 {
-#                   "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action: Starting\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-#                   "color": "dbab09",
-#                   "fields": [
-#                     {
-#                       "title": "Status",
-#                       "short": true,
-#                       "value": "In Progress"
-#                     }
-#                   ]
-#                 }
-#               ]
-#             }
-#         env:
-#           SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
-
-#       - name: Configure AWS credentials
-#         uses: aws-actions/configure-aws-credentials@v4
-#         with:
-#           role-to-assume: ${{ env.ASSUME_ROLE }}
-#           aws-region: ap-northeast-1
-#           role-session-name: GitHubActionsSession
-#           audience: sts.amazonaws.com
-
-#       - name: Sync code to CodeCommit
-#         if: env.directory_changed == 'true'
-#         env:
-#           AWS_REGION: ap-northeast-1
-#         run: |
-#           echo "Syncing changes for ${{ matrix.dir }}"
-#           CodeCommitUrl="https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${{env.env}}-goldwin-codecommit-${{ matrix.dir }}-repo"
-#           git config --global --add safe.directory /github/workspace
-#           git config --global credential.'https://git-codecommit.*.amazonaws.com'.helper '!aws codecommit credential-helper $@'
-#           git config --global credential.UseHttpPath true
-#           git remote add sync ${CodeCommitUrl}
-#           git push sync staging --force
-
-#       - name: Notify Slack (Completed)
-#         if: success() && env.directory_changed == 'true'
-#         uses: slackapi/slack-github-action@v1.22.0
-#         with:
-#           channel-id: ${{ env.CHANNEL_ID }}
-#           payload: |
-#             {
-#               "text": "<!channel>\nSync code finished (Completed) for ${{ matrix.dir }} :deploy:",
-#               "attachments": [
-#                 {
-#                   "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-#                   "color": "28a745",
-#                   "fields": [
-#                     {
-#                       "title": "Status",
-#                       "short": true,
-#                       "value": "Completed"
-#                     }
-#                   ]
-#                 }
-#               ]
-#             }
-#         env:
-#           SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
-
-#       - name: Notify Slack (Failed)
-#         if: failure() && env.directory_changed == 'true'
-#         uses: slackapi/slack-github-action@v1.22.0
-#         with:
-#           channel-id: ${{ env.CHANNEL_ID }}
-#           payload: |
-#             {
-#               "text": "<!channel>\nSync code Failure for ${{ matrix.dir }} :error:",
-#               "attachments": [
-#                 {
-#                   "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-#                   "color": "ff0000",
-#                   "fields": [
-#                     {
-#                       "title": "Status",
-#                       "short": true,
-#                       "value": "Failed"
-#                     }
-#                   ]
-#                 }
-#               ]
-#             }
-#         env:
-#           SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
-
-
 #####
-name: Sync Code to AWS CodeCommit
+name: GoldWin Sync code to AWS CodeCommit
 
 on:
   push:
@@ -322,47 +152,11 @@ on:
       - 'school/**'
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      changed_dirs: ${{ steps.set-matrix.outputs.changed_dirs }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Detect changed directories
-        id: set-matrix
-        run: |
-          changed_dirs=()
-          for dir in parent kid school; do
-            if git diff --name-only HEAD~1 HEAD | grep -q "^$dir/"; then
-              changed_dirs+=("$dir")
-            fi
-          done
-          
-          # Ensure changed_dirs is a valid JSON array
-          if [ ${#changed_dirs[@]} -eq 0 ]; then
-            echo "[]" > changed_dirs.json
-          else
-            printf '%s\n' "${changed_dirs[@]}" | jq -R . | jq -s . > changed_dirs.json
-          fi
-
-          echo "Changed directories: $(cat changed_dirs.json)"
-          echo "::set-output name=changed_dirs::$(cat changed_dirs.json)"
-
-      - name: Debug Output
-        run: |
-          echo "Changed directories: ${{ steps.set-matrix.outputs.changed_dirs }}"
-
   deploy:
-    needs: detect-changes
     runs-on: ubuntu-latest
-    if: needs.detect-changes.outputs.changed_dirs != '[]'
     strategy:
       matrix:
-        dir: ${{ fromJson(needs.detect-changes.outputs.changed_dirs) }}
+        dir: [parent, kid, school]
     permissions:
       id-token: write
       contents: read
@@ -401,7 +195,23 @@ jobs:
               exit 1
           fi
 
+      - name: Check if folder changed
+        id: folder-check
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -q "^${{ matrix.dir }}/"; then
+            echo "directory_changed=true" >> $GITHUB_ENV
+          else
+            echo "directory_changed=false" >> $GITHUB_ENV
+          fi
+
+      - name: Skip if folder not changed
+        if: env.directory_changed == 'false'
+        run: |
+          echo "No changes detected for ${{ matrix.dir }}. Skipping job."
+          exit 0
+
       - name: Notify Slack (Start)
+        if: env.directory_changed == 'true'
         uses: slackapi/slack-github-action@v1.22.0
         with:
           channel-id: ${{ env.CHANNEL_ID }}
@@ -410,7 +220,7 @@ jobs:
               "text": "<!channel>\nSync code started (In Progress) for ${{ matrix.dir }} :beach-ball:",
               "attachments": [
                 {
-                  "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}",
+                  "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action: Starting\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
                   "color": "dbab09",
                   "fields": [
                     {
@@ -434,6 +244,7 @@ jobs:
           audience: sts.amazonaws.com
 
       - name: Sync code to CodeCommit
+        if: env.directory_changed == 'true'
         env:
           AWS_REGION: ap-northeast-1
         run: |
@@ -444,3 +255,192 @@ jobs:
           git config --global credential.UseHttpPath true
           git remote add sync ${CodeCommitUrl}
           git push sync staging --force
+
+      - name: Notify Slack (Completed)
+        if: success() && env.directory_changed == 'true'
+        uses: slackapi/slack-github-action@v1.22.0
+        with:
+          channel-id: ${{ env.CHANNEL_ID }}
+          payload: |
+            {
+              "text": "<!channel>\nSync code finished (Completed) for ${{ matrix.dir }} :deploy:",
+              "attachments": [
+                {
+                  "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+                  "color": "28a745",
+                  "fields": [
+                    {
+                      "title": "Status",
+                      "short": true,
+                      "value": "Completed"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
+
+      - name: Notify Slack (Failed)
+        if: failure() && env.directory_changed == 'true'
+        uses: slackapi/slack-github-action@v1.22.0
+        with:
+          channel-id: ${{ env.CHANNEL_ID }}
+          payload: |
+            {
+              "text": "<!channel>\nSync code Failure for ${{ matrix.dir }} :error:",
+              "attachments": [
+                {
+                  "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}\nGitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+                  "color": "ff0000",
+                  "fields": [
+                    {
+                      "title": "Status",
+                      "short": true,
+                      "value": "Failed"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
+
+
+# #####
+# name: Sync Code to AWS CodeCommit
+
+# on:
+#   push:
+#     branches:
+#       - develop
+#       - staging
+#       - main
+#     paths:
+#       - 'parent/**'
+#       - 'kid/**'
+#       - 'school/**'
+
+# jobs:
+#   detect-changes:
+#     runs-on: ubuntu-latest
+#     outputs:
+#       changed_dirs: ${{ steps.set-matrix.outputs.changed_dirs }}
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+#         with:
+#           fetch-depth: 0
+
+#       - name: Detect changed directories
+#         id: set-matrix
+#         run: |
+#           changed_dirs=()
+#           for dir in parent kid school; do
+#             if git diff --name-only HEAD~1 HEAD | grep -q "^$dir/"; then
+#               changed_dirs+=("$dir")
+#             fi
+#           done
+          
+#           # Ensure changed_dirs is a valid JSON array
+#           if [ ${#changed_dirs[@]} -eq 0 ]; then
+#             echo "[]" > changed_dirs.json
+#           else
+#             printf '%s\n' "${changed_dirs[@]}" | jq -R . | jq -s . > changed_dirs.json
+#           fi
+
+#           echo "Changed directories: $(cat changed_dirs.json)"
+#           echo "::set-output name=changed_dirs::$(cat changed_dirs.json)"
+
+#       - name: Debug Output
+#         run: |
+#           echo "Changed directories: ${{ steps.set-matrix.outputs.changed_dirs }}"
+
+#   deploy:
+#     needs: detect-changes
+#     runs-on: ubuntu-latest
+#     if: needs.detect-changes.outputs.changed_dirs != '[]'
+#     strategy:
+#       matrix:
+#         dir: ${{ fromJson(needs.detect-changes.outputs.changed_dirs) }}
+#     permissions:
+#       id-token: write
+#       contents: read
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+#         with:
+#           fetch-depth: 0
+
+#       - name: Set Environment Variables
+#         run: |
+#           if [[ "${{ github.ref_name }}" == "develop" ]]; then
+#               echo "env=dev" >> $GITHUB_ENV
+#               echo "BRANCH=develop" >> $GITHUB_ENV
+#               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_DEV }}" >> $GITHUB_ENV
+#               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_DEV }}" >> $GITHUB_ENV
+#               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_DEV }}" >> $GITHUB_ENV
+#               echo "Environment=Develop" >> $GITHUB_ENV
+#           elif [[ "${{ github.ref_name }}" == "staging" ]]; then
+#               echo "env=stg" >> $GITHUB_ENV
+#               echo "BRANCH=staging" >> $GITHUB_ENV
+#               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_STG }}" >> $GITHUB_ENV
+#               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_STG }}" >> $GITHUB_ENV
+#               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_STG }}" >> $GITHUB_ENV
+#               echo "Environment=Staging" >> $GITHUB_ENV
+#           elif [[ "${{ github.ref_name }}" == "main" ]]; then
+#               echo "env=prd" >> $GITHUB_ENV
+#               echo "BRANCH=main" >> $GITHUB_ENV
+#               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_PRD }}" >> $GITHUB_ENV
+#               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_PRD }}" >> $GITHUB_ENV
+#               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_PRD }}" >> $GITHUB_ENV
+#               echo "Environment=Production" >> $GITHUB_ENV
+#           else
+#               echo "Unsupported branch. Exiting..."
+#               exit 1
+#           fi
+
+#       - name: Notify Slack (Start)
+#         uses: slackapi/slack-github-action@v1.22.0
+#         with:
+#           channel-id: ${{ env.CHANNEL_ID }}
+#           payload: |
+#             {
+#               "text": "<!channel>\nSync code started (In Progress) for ${{ matrix.dir }} :beach-ball:",
+#               "attachments": [
+#                 {
+#                   "pretext": "ENV: ${{ env.Environment }}\nRepository: ${{ github.repository }}",
+#                   "color": "dbab09",
+#                   "fields": [
+#                     {
+#                       "title": "Status",
+#                       "short": true,
+#                       "value": "In Progress"
+#                     }
+#                   ]
+#                 }
+#               ]
+#             }
+#         env:
+#           SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
+
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           role-to-assume: ${{ env.ASSUME_ROLE }}
+#           aws-region: ap-northeast-1
+#           role-session-name: GitHubActionsSession
+#           audience: sts.amazonaws.com
+
+#       - name: Sync code to CodeCommit
+#         env:
+#           AWS_REGION: ap-northeast-1
+#         run: |
+#           echo "Syncing changes for ${{ matrix.dir }}"
+#           CodeCommitUrl="https://git-codecommit.${AWS_REGION}.amazonaws.com/v1/repos/${{env.env}}-goldwin-codecommit-${{ matrix.dir }}-repo"
+#           git config --global --add safe.directory /github/workspace
+#           git config --global credential.'https://git-codecommit.*.amazonaws.com'.helper '!aws codecommit credential-helper $@'
+#           git config --global credential.UseHttpPath true
+#           git remote add sync ${CodeCommitUrl}
+#           git push sync staging --force
