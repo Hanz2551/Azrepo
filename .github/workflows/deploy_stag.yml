@@ -30,6 +30,7 @@ jobs:
           fi  
 
       - id: slack
+        if: env.directory_changed == 'true'
         uses: slackapi/slack-github-action@v1.22.0
         with:
           channel-id: "C081KFCEAUD"
@@ -81,7 +82,8 @@ jobs:
           git push sync staging --force
 
       - name: Report Status
-        if: failure()
+        if: failure() && env.directory_changed == 'true'
+        # if: failure()
         uses: slackapi/slack-github-action@v1.22.0
         with:
           channel-id: "C081KFCEAUD"
@@ -106,7 +108,8 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN}}
 
       - name: Report Status
-        if: success()
+        if: success() && env.directory_changed == 'true'
+        # if: success()
         uses: slackapi/slack-github-action@v1.22.0
         with:
           channel-id: "C081KFCEAUD"
