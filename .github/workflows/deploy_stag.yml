@@ -358,6 +358,7 @@ jobs:
   deploy:
     needs: detect-changes
     runs-on: ubuntu-latest
+    if: needs.detect-changes.outputs.changed_dirs != '[]'
     strategy:
       matrix:
         dir: ${{ fromJson(needs.detect-changes.outputs.changed_dirs) }}
