@@ -116,8 +116,19 @@ jobs:
           git config --global --add safe.directory /github/workspace
           git config --global credential.'https://git-codecommit.*.amazonaws.com'.helper '!aws codecommit credential-helper $@'
           git config --global credential.UseHttpPath true
+          # Kiểm tra tag hiện tại
+          git fetch --tags
+          
+          # Checkout vào tag từ GitHub
+          git checkout tags/${{ github.ref_name }}
+          
+          # Thêm remote của CodeCommit
           git remote add sync ${CodeCommitUrl}
-          git push sync staging --force
+          
+          # Push code từ tag lên branch trên CodeCommit
+          git push sync refs/tags/${{ github.ref_name }}:refs/heads/main --force
+          # git remote add sync ${CodeCommitUrl}
+          # git push sync staging --force
 
       - name: Notify Slack (Completed)
         if: success()
