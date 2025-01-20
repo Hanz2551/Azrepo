@@ -5,8 +5,8 @@ on:
   push:
     branches:
       # - develop
-      # - staging
-      - master
+      - staging
+      # - master
     tags:
       - 'release-tag-*' 
       - 'tag-*'  
