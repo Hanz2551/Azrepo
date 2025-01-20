@@ -7,9 +7,9 @@ on:
       # - develop
       - staging
       # - master
-    tags:
-      - 'release-tag-*' 
-      - 'tag-*'  
+    # tags:
+    #   - 'release-tag-*' 
+    #   - 'tag-*'  
     paths:
       - 'parent/**'
 
