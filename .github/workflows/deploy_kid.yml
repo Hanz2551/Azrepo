@@ -29,18 +29,21 @@ jobs:
       - name: Set Environment Variables
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/release-tag-* ]]; then
+              echo "GITHUB_REF: $GITHUB_REF"
               echo "ENV=prd" >> $GITHUB_ENV
               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_PRD }}" >> $GITHUB_ENV
               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_PRD }}" >> $GITHUB_ENV
               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_PRD }}" >> $GITHUB_ENV
               echo "Environment=Production" >> $GITHUB_ENV
           elif [[ "${GITHUB_REF}" == refs/tags/tag-* ]]; then
+              echo "GITHUB_REF: $GITHUB_REF"
               echo "env=stg" >> $GITHUB_ENV
               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_STG }}" >> $GITHUB_ENV
               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_STG }}" >> $GITHUB_ENV
               echo "SLACK_TOKEN=${{ secrets.SLACK_TOKEN_STG }}" >> $GITHUB_ENV
               echo "Environment=Staging" >> $GITHUB_ENV
           else
+              echo "GITHUB_REF: $GITHUB_REF"
               echo "env=dev" >> $GITHUB_ENV
               echo "ASSUME_ROLE=${{ secrets.ASSUME_ROLE_DEV }}" >> $GITHUB_ENV
               echo "CHANNEL_ID=${{ secrets.CHANNEL_ID_DEV }}" >> $GITHUB_ENV
